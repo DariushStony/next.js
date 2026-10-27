@@ -5,7 +5,7 @@ use std::{
     hash::{Hash, Hasher},
     io::{BufRead, Read, Result as IoResult, Write},
     mem,
-    ops::{AddAssign, Deref},
+    ops::{AddAssign, Deref, Range},
     pin::Pin,
     task::{Context as TaskContext, Poll},
 };
@@ -125,6 +125,27 @@ impl Rope {
 
     pub fn into_bytes(self) -> Bytes {
         self.data.into_bytes(self.length)
+    }
+
+    /// Returns the bytes in `range` as a new rope, without copying them: whole sections are
+    /// shared and only the sections at the edges are sliced.
+    ///
+    /// Panics if `range` is out of bounds or decreasing.
+    pub fn slice(&self, range: Range<usize>) -> Rope {
+        assert!(
+            range.start <= range.end && range.end <= self.length,
+            "rope slice {range:?} out of bounds for length {}",
+            self.length
+        );
+        if range.start == 0 && range.end == self.length {
+            return self.clone();
+        }
+        let mut elems = Vec::new();
+        self.data.slice_into(range.clone(), &mut elems);
+        Rope {
+            length: range.len(),
+            data: InnerRope::from(elems),
+        }
     }
 }
 
@@ -581,6 +602,37 @@ impl From<Vec<u8>> for Uncommitted {
 }
 
 impl InnerRope {
+    /// Total number of bytes, walking every section. Named so as not to shadow the element count
+    /// `len` that `Deref` to the element vector provides.
+    fn byte_len(&self) -> usize {
+        self.iter().map(|v| v.byte_len()).sum()
+    }
+
+    /// Pushes the elements covering `range` (relative to the start of this rope) onto `out`.
+    fn slice_into(&self, range: Range<usize>, out: &mut Vec<RopeElem>) {
+        let mut offset = 0;
+        for elem in self.iter() {
+            if offset >= range.end {
+                break;
+            }
+            let len = elem.byte_len();
+            let elem_end = offset + len;
+            let start = range.start.max(offset);
+            let end = range.end.min(elem_end);
+            if start < end {
+                if start == offset && end == elem_end {
+                    out.push(elem.clone());
+                } else {
+                    match elem {
+                        Local(bytes) => out.push(Local(bytes.slice(start - offset..end - offset))),
+                        Shared(inner) => inner.slice_into(start - offset..end - offset, out),
+                    }
+                }
+            }
+            offset = elem_end;
+        }
+    }
+
     /// Returns a String instance of all bytes.
     fn to_str(&self, len: usize) -> Result<Cow<'_, str>> {
         match &self[..] {
@@ -693,6 +745,13 @@ impl Deref for InnerRope {
 }
 
 impl RopeElem {
+    fn byte_len(&self) -> usize {
+        match self {
+            Local(b) => b.len(),
+            Shared(r) => r.byte_len(),
+        }
+    }
+
     fn maybe_cmp(&self, other: &Self) -> Option<Ordering> {
         match (self, other) {
             (Local(a), Local(b)) => {
@@ -944,21 +1003,8 @@ mod test {
         fn new(value: Vec<RopeElem>) -> Self {
             let data = InnerRope::from(value);
             Rope {
-                length: data.len(),
+                length: data.byte_len(),
                 data,
-            }
-        }
-    }
-    impl InnerRope {
-        fn len(&self) -> usize {
-            self.iter().map(|v| v.len()).sum()
-        }
-    }
-    impl RopeElem {
-        fn len(&self) -> usize {
-            match self {
-                RopeElem::Local(b) => b.len(),
-                RopeElem::Shared(r) => r.len(),
             }
         }
     }
@@ -968,6 +1014,23 @@ mod test {
         let empty = RopeBuilder::default().build();
         let mut reader = empty.read();
         assert!(reader.next().is_none());
+    }
+
+    #[test]
+    fn slice_shares_and_splits_sections() {
+        let rope = Rope::new(vec![
+            "abc".into(),
+            vec!["def".into(), vec!["ghi".into()].into()].into(),
+            "jkl".into(),
+        ]);
+        let text = "abcdefghijkl";
+        for start in 0..=text.len() {
+            for end in start..=text.len() {
+                let slice = rope.slice(start..end);
+                assert_eq!(slice.len(), end - start);
+                assert_eq!(slice.to_str().unwrap(), &text[start..end], "{start}..{end}");
+            }
+        }
     }
 
     #[test]
