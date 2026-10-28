@@ -54,7 +54,7 @@ packages/next/src/server/lib/is-rsc-request.ts
 packages/next/src/server/lib/router-utils/build-prefetch-segment-data-route.ts
 packages/next/src/server/app-render/encryption*.ts
 
-[app-router-client] @acdlite @eps1lon
+[app-router-client] @acdlite @lubieowoce
 packages/next/src/client/components/{app-router,app-router-instance,app-router-state,app-router-utils,app-router-announcer,layout-router,client-segment,client-page,render-tree,render-from-template-context,router-transition,router-transition-types,concurrent-router-queue,sequential-router-queue,use-action-queue,bfcache-state-manager,nav-failure-handler,navigation,navigation.react-server,navigation-untracked,navigation-dynamic-rendering,navigation-devtools,navigator,redirect,redirect-boundary,redirect-error,redirect-status-code,not-found,forbidden,unauthorized,error-boundary,catch-error,is-next-router-error,unstable-rethrow,promise-queue,readonly-url-search-params,client-boundary-params,use-offline,offline,server-async-storage,noop-head}*.{ts,tsx}
 packages/next/src/client/components/builtin/**
 packages/next/src/client/components/styles/**

@@ -9,6 +9,8 @@ severity: escalate (medium)
 - Changes under `test/lib/**`, `test/lib/e2e-utils/**`, `test/lib/next-test-utils.ts`, `test/lib/router-act.ts`, or the gate conditions
 - A timeout or retry added to a shared helper to get one test passing
 
+Not shared: a helper under `test/lib/**` that only one suite imports. Check the callers before escalating. A change to it is part of that suite's test, so review it like test code.
+
 ## Example
 
 Bad: adds a `Promise.race` timeout inside `router-act.ts` to get one flaky test past CI.

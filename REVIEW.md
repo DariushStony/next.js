@@ -130,7 +130,7 @@ One line per rule, with its signs. Open a rule's file before you raise a finding
 
 - [motivated-changes](review/rules/motivated-changes.md) **strong** for a [behavior change](#definitions) with no reason, otherwise **comment**: the description says what and why. Signs: a behavior change you noted in step 1 that the description doesn't explain.
 - [no-drive-bys](review/rules/no-drive-bys.md) **comment**: unrelated changes go in their own PR. Signs: anything the description doesn't mention; a diff much larger than it implies.
-- [shared-test-infra](review/rules/shared-test-infra.md) **medium**: shared test helpers get an owner's review. Signs: changes under `test/lib/**`.
+- [shared-test-infra](review/rules/shared-test-infra.md) **medium**: shared test helpers get an owner's review. Signs: changes under `test/lib/**` to a helper more than one suite uses.
 - [backed-claims](review/rules/backed-claims.md) **comment**, **medium** if it's the whole motivation: "faster" or "smaller" comes with a reason or a number. Signs: a perf or size claim with no mechanism or measurement.
 - [stated-tradeoffs](review/rules/stated-tradeoffs.md) **comment**: known regressions and tradeoffs are in the description. Signs: a size, build-time, or memory increase the description doesn't mention.
 - [principled-change](review/rules/principled-change.md) **medium**: a second special case for the same root cause reopens the design. Signs: a workaround next to an existing workaround for the same thing.

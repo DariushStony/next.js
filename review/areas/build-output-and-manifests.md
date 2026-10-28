@@ -14,7 +14,9 @@
 
 ## Escalate when
 
-- Any change to a manifest's shape or file name, to NFT trace inclusion, or to standalone/export directory layout (strong: these are public build output); changes to `prerender-manifest` classification (medium, shared with app-prerender).
+- Any change to a manifest's shape or file name, or to standalone/export directory layout (strong: these are public build output); changes to `prerender-manifest` classification (medium, shared with app-prerender).
+- A change that can drop a file needed at runtime from NFT traces, such as a new ignore pattern or a narrower include (strong: a missing traced file is a 500 at runtime). An ignore that only carries an existing ignore over to files that were moved or split is a comment. A wider include is medium: it grows every deployment.
+- A trace snapshot that changes only because the PR adds or moves an import is a comment: say whether the new file is expected.
 - TODO
 
 ## Rules
